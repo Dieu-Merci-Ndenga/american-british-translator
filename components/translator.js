@@ -41,7 +41,7 @@ const translate = (str, locale) => {
     const timeRegex =
         translationType === "american-to-british"
             ? /([1-9]|1[012]):[0-5][0-9]/g
-            : /([1-9]|1[012]).[0-5][0-9]/g;
+            : /([1-9]|1[012])\.[0-5][0-9]/g;
 
     const matchesMap = {};
 
@@ -67,11 +67,10 @@ const translate = (str, locale) => {
     });
 
     // Search for individual word matches and add'em to the matchesMap object
-    lowerCasedOriginalStr
-        .match(/(\w+([-'])(\w+)?['-]?(\w+))|\w+/g)
-        .map((word) => {
-            if (dict[word]) return (matchesMap[word] = dict[word]);
-        });
+    const words = lowerCasedOriginalStr.match(/(\w+([-'])(\w+)?['-]?(\w+))|\w+/g) || [];
+    words.map((word) => {
+        if (dict[word]) return (matchesMap[word] = dict[word]);
+    });
 
     // Search for time matches and add'em to the matchesMap object
     const matchedTimes = lowerCasedOriginalStr.match(timeRegex);
@@ -100,17 +99,19 @@ const translate = (str, locale) => {
 };
 
 const replaceAll = (str, mapObj) => {
-    const re = new RegExp(Object.keys(mapObj).join("|"), "gi");
+    const re = new RegExp(Object.keys(mapObj).map(escapeRegExp).join("|"), "gi");
 
     return str.replace(re, (matched) => mapObj[matched.toLowerCase()]);
 };
 
 const replaceAllWithHighlight = (str, mapObj) => {
-    const re = new RegExp(Object.keys(mapObj).join("|"), "gi");
+    const re = new RegExp(Object.keys(mapObj).map(escapeRegExp).join("|"), "gi");
 
     return str.replace(re, (matched) => {
         return `<span class="highlight">${mapObj[matched.toLowerCase()]}</span>`;
     });
 };
+
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 module.exports = translate;
